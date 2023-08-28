@@ -108,19 +108,24 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   //
   // Shape 1
   //
-  G4Material* shape1_mat = nist->FindOrBuildMaterial("G4_A-150_TISSUE");
-  G4ThreeVector pos1 = G4ThreeVector(0, 2*cm, -7*cm);
+  // G4Material* shape1_mat = nist->FindOrBuildMaterial("G4_A-150_TISSUE");
+  G4Material* Be = new G4Material("Beryllium", 4., 9.012*g/mole, 1.850*g/cm3);
+
+  G4ThreeVector pos1 = G4ThreeVector(0, 0*cm, -7*cm);
 
   // Conical section shape
   G4double shape1_rmina =  0.*cm, shape1_rmaxa = 2.*cm;
   G4double shape1_rminb =  0.*cm, shape1_rmaxb = 4.*cm;
   G4double shape1_hz = 3.*cm;
   G4double shape1_phimin = 0.*deg, shape1_phimax = 360.*deg;
-  auto solidShape1 = new G4Cons("Shape1", shape1_rmina, shape1_rmaxa, shape1_rminb, shape1_rmaxb,
-    shape1_hz, shape1_phimin, shape1_phimax);
+  //auto solidShape1 = new G4Cons("Shape1", shape1_rmina, shape1_rmaxa, shape1_rminb, shape1_rmaxb,
+  //  shape1_hz, shape1_phimin, shape1_phimax);
+  
+  auto solidShape1 = new G4Box("Shape1",                    // its name
+    0.5 * env_sizeXY, 0.5 * env_sizeXY, 1 * mm);
 
   auto logicShape1 = new G4LogicalVolume(solidShape1,  // its solid
-    shape1_mat,                                        // its material
+    Be,                                        // its material
     "Shape1");                                         // its name
 
   new G4PVPlacement(nullptr,  // no rotation
@@ -136,18 +141,23 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   // Shape 2
   //
   G4Material* shape2_mat = nist->FindOrBuildMaterial("G4_BONE_COMPACT_ICRU");
-  G4ThreeVector pos2 = G4ThreeVector(0, -1*cm, 7*cm);
+  G4Material* CdTe = nist->FindOrBuildMaterial("G4_CADMIUM_TELLURIDE");
+
+  G4ThreeVector pos2 = G4ThreeVector(0, 0*cm, 7*cm);
 
   // Trapezoid shape
   G4double shape2_dxa = 12*cm, shape2_dxb = 12*cm;
   G4double shape2_dya = 10*cm, shape2_dyb = 16*cm;
   G4double shape2_dz  = 6*cm;
-  auto solidShape2 = new G4Trd("Shape2",  // its name
-    0.5 * shape2_dxa, 0.5 * shape2_dxb, 0.5 * shape2_dya, 0.5 * shape2_dyb,
-    0.5 * shape2_dz);  // its size
+  //auto solidShape2 = new G4Trd("Shape2",  // its name
+  //  0.5 * shape2_dxa, 0.5 * shape2_dxb, 0.5 * shape2_dya, 0.5 * shape2_dyb,
+  //  0.5 * shape2_dz);  // its size
+
+  auto solidShape2 = new G4Box("Shape2",                    // its name
+    0.5 * env_sizeXY, 0.5 * env_sizeXY, 1 * mm);
 
   auto logicShape2 = new G4LogicalVolume(solidShape2,  // its solid
-    shape2_mat,                                        // its material
+    CdTe,                                        // its material
     "Shape2");                                         // its name
 
   new G4PVPlacement(nullptr,  // no rotation
