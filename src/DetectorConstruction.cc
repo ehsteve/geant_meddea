@@ -53,7 +53,6 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   // Envelope parameters
   //
   G4double env_sizeXY = 20*cm, env_sizeZ = 30*cm;
-  G4Material* env_mat = nist->FindOrBuildMaterial("G4_WATER");
 
   // Option to switch on/off checking of volumes overlaps
   //
@@ -64,13 +63,18 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   //
   G4double world_sizeXY = 1.2*env_sizeXY;
   G4double world_sizeZ  = 1.2*env_sizeZ;
-  G4Material* world_mat = nist->FindOrBuildMaterial("G4_AIR");
+  G4Material* Air = nist->FindOrBuildMaterial("G4_AIR");
+
+  // Material: Vacuum
+  G4Material* Vacuum = new G4Material("Vacuum",
+				      1.0 , 1.01*g/mole, 1.0E-25*g/cm3,
+				      kStateGas, 2.73*kelvin, 3.0E-18*pascal );
 
   auto solidWorld = new G4Box("World",                           // its name
     0.5 * world_sizeXY, 0.5 * world_sizeXY, 0.5 * world_sizeZ);  // its size
 
   auto logicWorld = new G4LogicalVolume(solidWorld,  // its solid
-    world_mat,                                       // its material
+    Vacuum,                                       // its material
     "World");                                        // its name
 
   auto physWorld = new G4PVPlacement(nullptr,  // no rotation
@@ -89,7 +93,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
     0.5 * env_sizeXY, 0.5 * env_sizeXY, 0.5 * env_sizeZ);  // its size
 
   auto logicEnv = new G4LogicalVolume(solidEnv,  // its solid
-    env_mat,                                     // its material
+    Vacuum,                                     // its material
     "Envelope");                                 // its name
 
   new G4PVPlacement(nullptr,  // no rotation
