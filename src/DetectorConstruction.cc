@@ -28,6 +28,7 @@
 /// \brief Implementation of the B1::DetectorConstruction class
 
 #include "DetectorConstruction.hh"
+#include "calisteDetectorSD.hh"
 
 #include "G4RunManager.hh"
 #include "G4NistManager.hh"
@@ -39,6 +40,7 @@
 #include "G4LogicalVolume.hh"
 #include "G4PVPlacement.hh"
 #include "G4SystemOfUnits.hh"
+#include "G4SDManager.hh"
 
 namespace B1
 {
@@ -169,14 +171,45 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
     0,                        // copy number
     checkOverlaps);           // overlaps checking
 
+  //-----------------------
+  // - Sensitive detector -
+  //-----------------------
+
+  G4ThreeVector pos3 = G4ThreeVector(0, 0*cm, 10*cm);
+
+  auto trackerSolid = new G4Box("tracker",  0.5 * 20 * cm, 0.5 * 30 * cm, 1 * mm);
+  auto trackerLogicalVolume = new G4LogicalVolume(trackerSolid, CdTe, "Tracker", nullptr, nullptr, nullptr);
+  auto trackerPhysicalVolume = new G4PVPlacement(nullptr, // no rotation
+      pos3, // at (x, y, z)
+      trackerLogicalVolume, // its logical volume
+      "Tracker", // its name
+      logicEnv, // its mother volume
+      false, // no boolean operations
+      0); // copy number
+
+  constexpr auto TRACKER_SENSITIVE_DETECTOR_NAME{"meddea/DetectorSD"};
+  auto *trackerSensitiveDetector = new calisteDetectorSD(TRACKER_SENSITIVE_DETECTOR_NAME);
+  trackerLogicalVolume->SetSensitiveDetector(trackerSensitiveDetector);
+  //trackerVisualizationStyle = new G4VisAttributes();
+  //trackerVisualizationStyle->SetColor(G4Color(1.0, 1.0, 1.0)); // black
+  //trackerLogicalVolume->SetVisAttributes(trackerVisualizationStyle);
   // Set Shape2 as scoring volume
   //
   fScoringVolume = logicShape2;
 
-  //
-  //always return the physical World
-  //
   return physWorld;
+}
+
+void DetectorConstruction::ConstructSDandField()
+{
+  G4SDManager::GetSDMpointer()->SetVerboseLevel(1);
+  auto *sensitiveDetectorManager = G4SDManager::GetSDMpointer();
+
+  constexpr auto TRACKER_SENSITIVE_DETECTOR_NAME{"meddea/DetectorSD"};
+  auto *trackerSensitiveDetector = new calisteDetectorSD(TRACKER_SENSITIVE_DETECTOR_NAME);
+  sensitiveDetectorManager->AddNewDetector(trackerSensitiveDetector);
+  // the following is the problem line
+  trackerLogicalVolume->SetSensitiveDetector(trackerSensitiveDetector);
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

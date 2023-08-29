@@ -23,53 +23,64 @@
 // * acceptance of all terms of the Geant4 Software license.          *
 // ********************************************************************
 //
-//
-/// \file B1/include/DetectorConstruction.hh
-/// \brief Definition of the B1::DetectorConstruction class
 
-#ifndef B1DetectorConstruction_h
-#define B1DetectorConstruction_h 1
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo....
 
-#include "G4VUserDetectorConstruction.hh"
-#include "globals.hh"
-#include "G4VisAttributes.hh"
-#include "G4Box.hh"
+#include "AnalysisManager.hh"
+#include <sstream>
 
-class G4Box;
-class G4VPhysicalVolume;
-class G4LogicalVolume;
+AnalysisManager *AnalysisManager::instance{nullptr};
 
-/// Detector construction class to define materials and geometry.
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo....
 
-namespace B1
+AnalysisManager::AnalysisManager()
 {
-
-class DetectorConstruction : public G4VUserDetectorConstruction
-{
-  public:
-    DetectorConstruction() = default;
-    ~DetectorConstruction() override = default;
-    void ConstructSDandField() override;
-
-    G4VPhysicalVolume* Construct() override;
-
-    G4LogicalVolume* GetScoringVolume() const { return fScoringVolume; }
-    auto GetTracker() -> const G4VPhysicalVolume* {
-        return trackerPhysicalVolume;        
-    };
-  protected:
-    G4LogicalVolume* fScoringVolume = nullptr;
-  
-  private:
-      // tracker
-    G4Box* trackerSolid; // solid
-    G4LogicalVolume* trackerLogicalVolume; // logical volume
-    G4VPhysicalVolume* trackerPhysicalVolume; // physical volume
-    G4VisAttributes* trackerVisualizationStyle; // visualization style
-};
-
+    dataFile1.open("TrackerPhotonEnergy.out"); // open the file
+//    dataFile2.open("TotalEnergy.out"); // open the file
 }
 
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo....
 
-#endif
+AnalysisManager::~AnalysisManager()
+{
+    dataFile1.close(); // close the file
+//    dataFile2.close(); // close the file
+}
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo....
+
+auto AnalysisManager::Instance() -> AnalysisManager*
+{
+    // A new instance of AnalysisManager is created, if it does not exist:
+    if (instance == nullptr) {
+        instance = new AnalysisManager();
+    }
+
+    // The instance of AnalysisManager is returned:
+    return instance;
+}
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo....
+
+void AnalysisManager::Destroy()
+{
+    // The AnalysisManager instance is deleted, if it exists:
+    if (instance != nullptr) {
+        delete instance;
+        instance = nullptr;
+    }
+}
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo....
+
+void AnalysisManager::Score(G4double depositedEnergy)
+{
+    dataFile1 << depositedEnergy << std::endl;
+}
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo....
+
+void AnalysisManager::ScoreTotalEnergy(G4double totalDepositedEnergy)
+{
+    dataFile2 << totalDepositedEnergy << std::endl;
+}

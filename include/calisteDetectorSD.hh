@@ -23,53 +23,30 @@
 // * acceptance of all terms of the Geant4 Software license.          *
 // ********************************************************************
 //
-//
-/// \file B1/include/DetectorConstruction.hh
-/// \brief Definition of the B1::DetectorConstruction class
 
-#ifndef B1DetectorConstruction_h
-#define B1DetectorConstruction_h 1
+#ifndef calisteDetectorSD_h
+#define calisteDetectorSD_h 1
 
-#include "G4VUserDetectorConstruction.hh"
-#include "globals.hh"
-#include "G4VisAttributes.hh"
-#include "G4Box.hh"
+#include "DetectorHit.hh"
 
-class G4Box;
-class G4VPhysicalVolume;
-class G4LogicalVolume;
+#include "G4VSensitiveDetector.hh"
 
-/// Detector construction class to define materials and geometry.
+class G4HCofThisEvent;
+class G4Step;
 
-namespace B1
-{
+class calisteDetectorSD : public G4VSensitiveDetector {
+public:    
+    explicit calisteDetectorSD(G4String name);
+    
+    ~calisteDetectorSD() override;
 
-class DetectorConstruction : public G4VUserDetectorConstruction
-{
-  public:
-    DetectorConstruction() = default;
-    ~DetectorConstruction() override = default;
-    void ConstructSDandField() override;
+    void EndOfEvent(G4HCofThisEvent* collection) override;
+    
+    void Initialize(G4HCofThisEvent* collection) override;
+    
+    auto ProcessHits(G4Step* step, G4TouchableHistory* history) -> G4bool override;
 
-    G4VPhysicalVolume* Construct() override;
-
-    G4LogicalVolume* GetScoringVolume() const { return fScoringVolume; }
-    auto GetTracker() -> const G4VPhysicalVolume* {
-        return trackerPhysicalVolume;        
-    };
-  protected:
-    G4LogicalVolume* fScoringVolume = nullptr;
-  
-  private:
-      // tracker
-    G4Box* trackerSolid; // solid
-    G4LogicalVolume* trackerLogicalVolume; // logical volume
-    G4VPhysicalVolume* trackerPhysicalVolume; // physical volume
-    G4VisAttributes* trackerVisualizationStyle; // visualization style
+private:
+    DetectorHitsCollection* trackerCollection;
 };
-
-}
-
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
-
 #endif

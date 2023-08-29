@@ -23,53 +23,47 @@
 // * acceptance of all terms of the Geant4 Software license.          *
 // ********************************************************************
 //
-//
-/// \file B1/include/DetectorConstruction.hh
-/// \brief Definition of the B1::DetectorConstruction class
+#ifndef ANALYSISMANAGER_HH
+#define ANALYSISMANAGER_HH
 
-#ifndef B1DetectorConstruction_h
-#define B1DetectorConstruction_h 1
-
-#include "G4VUserDetectorConstruction.hh"
 #include "globals.hh"
-#include "G4VisAttributes.hh"
-#include "G4Box.hh"
+#include <fstream>
 
-class G4Box;
-class G4VPhysicalVolume;
-class G4LogicalVolume;
+class AnalysisManager {
 
-/// Detector construction class to define materials and geometry.
+public:
+    // The analysis class is designed to be a singleton (i.e. only one instance can exist).
+    // A member function called Instance is defined, which allows the user to get
+    // a pointer to the existing instance or to create it, if it does not yet exist.
+    static auto Instance() -> AnalysisManager*;
 
-namespace B1
-{
+    // The analysis class instance can be deleted by calling the Destroy method.
+    // (NOTE: The class destructor is protected, and can thus not be called directly)
+    static void Destroy();
 
-class DetectorConstruction : public G4VUserDetectorConstruction
-{
-  public:
-    DetectorConstruction() = default;
-    ~DetectorConstruction() override = default;
-    void ConstructSDandField() override;
+    // Member function used to score the total energy deposit
+    void ScoreTotalEnergy(G4double totalDepositedEnergy);
 
-    G4VPhysicalVolume* Construct() override;
+    // Member function used to dump hits
+    void Score(G4double depositedEnergy);
 
-    G4LogicalVolume* GetScoringVolume() const { return fScoringVolume; }
-    auto GetTracker() -> const G4VPhysicalVolume* {
-        return trackerPhysicalVolume;        
-    };
-  protected:
-    G4LogicalVolume* fScoringVolume = nullptr;
-  
-  private:
-      // tracker
-    G4Box* trackerSolid; // solid
-    G4LogicalVolume* trackerLogicalVolume; // logical volume
-    G4VPhysicalVolume* trackerPhysicalVolume; // physical volume
-    G4VisAttributes* trackerVisualizationStyle; // visualization style
+protected:
+    // Constructor (protected)
+    explicit AnalysisManager();
+
+    // Destructor (protected)
+    virtual ~AnalysisManager();
+
+    // Prevent copying
+    AnalysisManager(const AnalysisManager& only);
+    
+    auto operator=(const AnalysisManager& only) -> const AnalysisManager&;
+
+private:    
+    static AnalysisManager* instance; // The static instance of the AnalysisManager class
+    
+    std::ofstream dataFile1;
+    
+    std::ofstream dataFile2;
 };
-
-}
-
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
-
-#endif
+#endif // ANALYSISMANAGER_HH

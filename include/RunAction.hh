@@ -33,6 +33,7 @@
 #include "G4UserRunAction.hh"
 #include "G4Accumulable.hh"
 #include "globals.hh"
+#include "G4Timer.hh"
 
 class G4Run;
 
@@ -51,14 +52,15 @@ class RunAction : public G4UserRunAction
     RunAction();
     ~RunAction() override = default;
 
-    void BeginOfRunAction(const G4Run*) override;
-    void   EndOfRunAction(const G4Run*) override;
+    void BeginOfRunAction(const G4Run *run) override;
+    void   EndOfRunAction(const G4Run *run) override;
 
     void AddEdep (G4double edep);
 
   private:
     G4Accumulable<G4double> fEdep = 0.;
     G4Accumulable<G4double> fEdep2 = 0.;
+    G4Timer timerRun;
 };
 
 }

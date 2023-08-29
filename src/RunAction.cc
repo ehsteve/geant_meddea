@@ -31,6 +31,7 @@
 #include "PrimaryGeneratorAction.hh"
 #include "DetectorConstruction.hh"
 // #include "Run.hh"
+#include "AnalysisManager.hh"
 
 #include "G4RunManager.hh"
 #include "G4Run.hh"
@@ -67,7 +68,7 @@ RunAction::RunAction()
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-void RunAction::BeginOfRunAction(const G4Run*)
+void RunAction::BeginOfRunAction(const G4Run *run)
 {
   // inform the runManager to save random number seed
   G4RunManager::GetRunManager()->SetRandomNumberStore(false);
@@ -75,6 +76,15 @@ void RunAction::BeginOfRunAction(const G4Run*)
   // reset accumulables to their initial values
   G4AccumulableManager* accumulableManager = G4AccumulableManager::Instance();
   accumulableManager->Reset();
+
+  timerRun.Start();
+    
+  if (IsMaster()) {
+      G4cout << "--- Run " << run->GetRunID() << " (master) start." << G4endl;
+      AnalysisManager::Instance();
+  } else {
+      G4cout << "--- Run " << run->GetRunID() << " (worker) start." << G4endl;
+  }
 
 }
 
@@ -121,14 +131,13 @@ void RunAction::EndOfRunAction(const G4Run* run)
   // Print
   //
   if (IsMaster()) {
-    G4cout
-     << G4endl
-     << "--------------------End of Global Run-----------------------";
+    G4cout << "--- Run " << run->GetRunID() << " (master) end."
+            << " Total number of events: " << run->GetNumberOfEvent() << "."
+            << G4endl;
+        AnalysisManager::Instance()->Destroy();
   }
   else {
-    G4cout
-     << G4endl
-     << "--------------------End of Local Run------------------------";
+    G4cout << "--- Run " << run->GetRunID() << " (worker) end." << G4endl;
   }
 
   G4cout
@@ -141,6 +150,8 @@ void RunAction::EndOfRunAction(const G4Run* run)
      << "------------------------------------------------------------"
      << G4endl
      << G4endl;
+     timerRun.Stop();
+    G4cout << "  "  << timerRun << G4endl;
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
