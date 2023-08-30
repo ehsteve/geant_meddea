@@ -72,16 +72,16 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 				      1.0 , 1.01*g/mole, 1.0E-25*g/cm3,
 				      kStateGas, 2.73*kelvin, 3.0E-18*pascal );
 
-  auto solidWorld = new G4Box("World",                           // its name
+  auto worldSolid = new G4Box("World",                           // its name
     0.5 * world_sizeXY, 0.5 * world_sizeXY, 0.5 * world_sizeZ);  // its size
 
-  auto logicWorld = new G4LogicalVolume(solidWorld,  // its solid
+  auto worldLogicalVolume = new G4LogicalVolume(worldSolid,  // its solid
     Vacuum,                                       // its material
     "World");                                        // its name
 
-  auto physWorld = new G4PVPlacement(nullptr,  // no rotation
+  auto worldPhysicalVolume = new G4PVPlacement(nullptr,  // no rotation
     G4ThreeVector(),                           // at (0,0,0)
-    logicWorld,                                // its logical volume
+    worldLogicalVolume,                                // its logical volume
     "World",                                   // its name
     nullptr,                                   // its mother  volume
     false,                                     // no boolean operation
@@ -98,11 +98,11 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
     Vacuum,                                     // its material
     "Envelope");                                 // its name
 
-  new G4PVPlacement(nullptr,  // no rotation
+  auto physEnv = new G4PVPlacement(nullptr,  // no rotation
     G4ThreeVector(),          // at (0,0,0)
     logicEnv,                 // its logical volume
     "Envelope",               // its name
-    logicWorld,               // its mother  volume
+    worldLogicalVolume,               // its mother  volume
     false,                    // no boolean operation
     0,                        // copy number
     checkOverlaps);           // overlaps checking
@@ -162,14 +162,14 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
     CdTe,                                        // its material
     "Shape2");                                         // its name
 
-  new G4PVPlacement(nullptr,  // no rotation
-    pos2,                     // at position
-    logicShape2,              // its logical volume
-    "Shape2",                 // its name
-    logicEnv,                 // its mother  volume
-    false,                    // no boolean operation
-    0,                        // copy number
-    checkOverlaps);           // overlaps checking
+  //new G4PVPlacement(nullptr,  // no rotation
+  //  pos2,                     // at position
+  //  logicShape2,              // its logical volume
+  //  "Shape2",                 // its name
+  //  logicEnv,                 // its mother  volume
+  //  false,                    // no boolean operation
+  //  0,                        // copy number
+  //  checkOverlaps);           // overlaps checking
 
   //-----------------------
   // - Sensitive detector -
@@ -177,39 +177,44 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 
   G4ThreeVector pos3 = G4ThreeVector(0, 0*cm, 10*cm);
 
-  auto trackerSolid = new G4Box("tracker",  0.5 * 20 * cm, 0.5 * 30 * cm, 1 * mm);
-  auto trackerLogicalVolume = new G4LogicalVolume(trackerSolid, CdTe, "Tracker", nullptr, nullptr, nullptr);
+  auto trackerSolid = new G4Box("tracker",  0.5 * 20 * cm, 0.5 * 20 * cm, 1 * mm);
+  trackerLogicalVolume = new G4LogicalVolume(trackerSolid, CdTe, "Tracker", nullptr, nullptr, nullptr);
   auto trackerPhysicalVolume = new G4PVPlacement(nullptr, // no rotation
       pos3, // at (x, y, z)
       trackerLogicalVolume, // its logical volume
       "Tracker", // its name
       logicEnv, // its mother volume
-      false, // no boolean operations
-      0); // copy number
+      false,
+      0, // no boolean operations
+      checkOverlaps); // copy number
 
-  constexpr auto TRACKER_SENSITIVE_DETECTOR_NAME{"meddea/DetectorSD"};
-  auto *trackerSensitiveDetector = new calisteDetectorSD(TRACKER_SENSITIVE_DETECTOR_NAME);
-  trackerLogicalVolume->SetSensitiveDetector(trackerSensitiveDetector);
-  //trackerVisualizationStyle = new G4VisAttributes();
+  //constexpr auto TRACKER_SENSITIVE_DETECTOR_NAME{"meddea/DetectorSD"};
+  //auto *trackerSensitiveDetector = new calisteDetectorSD(TRACKER_SENSITIVE_DETECTOR_NAME);
+  //SetSensitiveDetector(trackerLogicalVolume, trackerSensitiveDetector);
+ //trackerVisualizationStyle = new G4VisAttributes();
   //trackerVisualizationStyle->SetColor(G4Color(1.0, 1.0, 1.0)); // black
   //trackerLogicalVolume->SetVisAttributes(trackerVisualizationStyle);
   // Set Shape2 as scoring volume
   //
   fScoringVolume = logicShape2;
 
-  return physWorld;
+  return worldPhysicalVolume;
 }
 
 void DetectorConstruction::ConstructSDandField()
 {
-  G4SDManager::GetSDMpointer()->SetVerboseLevel(1);
+  //G4SDManager::GetSDMpointer()->SetVerboseLevel(1);
   auto *sensitiveDetectorManager = G4SDManager::GetSDMpointer();
 
   constexpr auto TRACKER_SENSITIVE_DETECTOR_NAME{"meddea/DetectorSD"};
   auto *trackerSensitiveDetector = new calisteDetectorSD(TRACKER_SENSITIVE_DETECTOR_NAME);
   sensitiveDetectorManager->AddNewDetector(trackerSensitiveDetector);
   // the following is the problem line
-  trackerLogicalVolume->SetSensitiveDetector(trackerSensitiveDetector);
+          G4cout << "MySensitiveDetector::I'M HERE!! " << G4endl;
+
+  SetSensitiveDetector(trackerLogicalVolume, trackerSensitiveDetector);
+          G4cout << "MySensitiveDetector::I'M HERE 2!! " << G4endl;
+
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
