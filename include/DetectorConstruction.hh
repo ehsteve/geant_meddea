@@ -61,11 +61,17 @@ class DetectorConstruction : public G4VUserDetectorConstruction
     G4LogicalVolume* fScoringVolume = nullptr;
   
   private:
+      // world
+    G4Box* worldSolid; // solid envelope
+    G4LogicalVolume* worldLogicalVolume; // logical volume
+    G4VPhysicalVolume* worldPhysicalVolume; // physical volume
+    G4VisAttributes* worldVisualizationStyle; // visualization style
+    
       // tracker
     G4Box* trackerSolid; // solid
-    G4LogicalVolume* trackerLogicalVolume; // logical volume
-    G4VPhysicalVolume* trackerPhysicalVolume; // physical volume
-    G4VisAttributes* trackerVisualizationStyle; // visualization style
+    G4LogicalVolume* trackerLogicalVolume = nullptr; // logical volume
+    G4VPhysicalVolume* trackerPhysicalVolume = nullptr; // physical volume
+    G4VisAttributes* trackerVisualizationStyle = nullptr; // visualization style
 };
 
 }
