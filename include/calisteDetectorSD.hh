@@ -23,12 +23,13 @@
 // * acceptance of all terms of the Geant4 Software license.          *
 // ********************************************************************
 //
+/// \file B1/include/calisteDetectorSD.hh
+/// \brief Definition of the B1::calisteDetectorSD class
 
-#ifndef calisteDetectorSD_h
-#define calisteDetectorSD_h 1
+#ifndef B1calisteDetectorSD_h
+#define B1calisteDetectorSD_h 1
 
 #include "DetectorHit.hh"
-
 #include "G4VSensitiveDetector.hh"
 
 class G4HCofThisEvent;

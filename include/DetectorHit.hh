@@ -23,9 +23,11 @@
 // * acceptance of all terms of the Geant4 Software license.          *
 // ********************************************************************
 //
+/// \file B1/include/DetectorHit.hh
+/// \brief Definition of the B1::DetectorHit class
 
-#ifndef DetectorHit_h
-#define DetectorHit_h 1
+#ifndef B1DetectorHit_h
+#define B1DetectorHit_h 1
 
 #include <fstream>
 #include <iostream>

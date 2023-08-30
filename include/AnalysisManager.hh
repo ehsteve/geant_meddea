@@ -23,8 +23,11 @@
 // * acceptance of all terms of the Geant4 Software license.          *
 // ********************************************************************
 //
-#ifndef ANALYSISMANAGER_HH
-#define ANALYSISMANAGER_HH
+/// \file B1/include/AnalysisManager.hh
+/// \brief Definition of the B1::AnalysisManager class
+
+#ifndef B1AnalysisManager_h
+#define B1AnalysisManager_h 1
 
 #include "globals.hh"
 #include <fstream>
