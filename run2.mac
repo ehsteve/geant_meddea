@@ -1,27 +1,34 @@
-# Macro file for example B1
+# Macro file for meddea_sim
 # 
-# To be run preferably in batch, without graphics:
-# % exampleB1 run2.mac
-#
-#/run/numberOfThreads 4
+# Should be run in batch, without graphic
+
+# Initialize kernel
 /run/initialize
-#
-/control/verbose 2
-/run/verbose 2
-#
-# gamma 6 MeV to the direction (0.,0.,1.)
-# 10000 events
-#
-/gun/particle gamma
-/gun/energy 6 MeV
-#
-/run/printProgress 100
-/run/beamOn 1000
-# 
-# proton 210 MeV to the direction (0.,0.,1.)
-# 1000 events
-#
-/gun/particle proton
-/gun/energy 210 MeV
-#
-/run/beamOn 1000
+
+#/control/verbose 2
+#/run/verbose 2
+#/event/verbose 0
+#/tracking/verbose 1
+/tracking/storeTrajectory 1
+
+# position of the source
+/gps/particle gamma
+/gps/pos/type Plane
+/gps/pos/shape Square
+/gps/pos/centre 0. 0. 10. cm
+/gps/pos/halfx 10. cm
+/gps/pos/halfy 10. cm
+#/gps/pos/rot1 1. 0. 0.
+#/gps/pos/rot1 0. 1. 0.
+
+# energy distribution of the source
+#/gps/ene/type Mono
+#/gps/ene/mono 80 keV
+
+/gps/ene/type Pow
+/gps/ene/min 1. keV
+/gps/ene/max 100. keV
+/gps/ene/alpha 0.
+
+/run/printProgress 1000
+/run/beamOn 1000000

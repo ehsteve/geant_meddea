@@ -33,6 +33,7 @@
 #include "G4UnitsTable.hh"
 #include "G4VisAttributes.hh"
 #include "G4VVisManager.hh"
+#include "G4Threading.hh"
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo....
 
@@ -116,5 +117,7 @@ void DetectorHit::PrintToFile() const
         // << " " << position.y()
         // << " " << position.z()
         // << std::endl;
-    AnalysisManager::Instance()->Score(depositedEnergy);
+    //AnalysisManager* analysis = AnalysisManager::Instance();
+    //analysis->Score(depositedEnergy, position);
+    //analysis->bookScore(depositedEnergy, position, G4Threading::G4GetThreadId());    
 }

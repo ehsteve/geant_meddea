@@ -51,34 +51,27 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
 {
   // Get nist material manager
   G4NistManager* nist = G4NistManager::Instance();
-
   // Envelope parameters
-  //
-  G4double env_sizeXY = 20*cm, env_sizeZ = 30*cm;
-
+  G4double env_sizeXY = 20*cm, env_sizeZ = 20*cm;
   // Option to switch on/off checking of volumes overlaps
-  //
   G4bool checkOverlaps = true;
-
-  //
   // World
-  //
   G4double world_sizeXY = 1.2*env_sizeXY;
   G4double world_sizeZ  = 1.2*env_sizeZ;
-  G4Material* Air = nist->FindOrBuildMaterial("G4_AIR");
-
-  // Material: Vacuum
+  // Materials
+  // G4Material* Air = nist->FindOrBuildMaterial("G4_AIR");  // not used
   G4Material* Vacuum = new G4Material("Vacuum",
 				      1.0 , 1.01*g/mole, 1.0E-25*g/cm3,
 				      kStateGas, 2.73*kelvin, 3.0E-18*pascal );
+  G4Material* Be = nist->FindOrBuildMaterial("G4_Be");
+  G4Material* Al = nist->FindOrBuildMaterial("G4_Al");
+  G4Material* CdTe = nist->FindOrBuildMaterial("G4_CADMIUM_TELLURIDE");
+  G4Material* W = nist->FindOrBuildMaterial("G4_W");  // Tungsten
+  //G4Material* Be = new G4Material("Beryllium", 4., 9.012*g/mole, 1.850*g/cm3);  // is this right?
 
-  auto worldSolid = new G4Box("World",                           // its name
-    0.5 * world_sizeXY, 0.5 * world_sizeXY, 0.5 * world_sizeZ);  // its size
-
-  auto worldLogicalVolume = new G4LogicalVolume(worldSolid,  // its solid
-    Vacuum,                                       // its material
-    "World");                                        // its name
-
+  auto worldSolid = new G4Box("World",                           
+    0.5 * world_sizeXY, 0.5 * world_sizeXY, 0.5 * world_sizeZ);  
+  auto worldLogicalVolume = new G4LogicalVolume(worldSolid, Vacuum, "World");
   auto worldPhysicalVolume = new G4PVPlacement(nullptr,  // no rotation
     G4ThreeVector(),                           // at (0,0,0)
     worldLogicalVolume,                                // its logical volume
@@ -88,16 +81,10 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
     0,                                         // copy number
     checkOverlaps);                            // overlaps checking
 
-  //
   // Envelope
-  //
-  auto solidEnv = new G4Box("Envelope",                    // its name
-    0.5 * env_sizeXY, 0.5 * env_sizeXY, 0.5 * env_sizeZ);  // its size
-
-  auto logicEnv = new G4LogicalVolume(solidEnv,  // its solid
-    Vacuum,                                     // its material
-    "Envelope");                                 // its name
-
+  auto solidEnv = new G4Box("Envelope",                    
+    0.5 * env_sizeXY, 0.5 * env_sizeXY, 0.75 * env_sizeZ);
+  auto logicEnv = new G4LogicalVolume(solidEnv, Vacuum, "Envelope");                                 
   auto physEnv = new G4PVPlacement(nullptr,  // no rotation
     G4ThreeVector(),          // at (0,0,0)
     logicEnv,                 // its logical volume
@@ -107,33 +94,22 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
     0,                        // copy number
     checkOverlaps);           // overlaps checking
 
-  //
   // Shape 1
   //
-  // G4Material* shape1_mat = nist->FindOrBuildMaterial("G4_A-150_TISSUE");
-  G4Material* Be = new G4Material("Beryllium", 4., 9.012*g/mole, 1.850*g/cm3);
 
-  G4ThreeVector pos1 = G4ThreeVector(0, 0*cm, -7*cm);
-
-  // Conical section shape
-  G4double shape1_rmina =  0.*cm, shape1_rmaxa = 2.*cm;
-  G4double shape1_rminb =  0.*cm, shape1_rmaxb = 4.*cm;
-  G4double shape1_hz = 3.*cm;
-  G4double shape1_phimin = 0.*deg, shape1_phimax = 360.*deg;
-  //auto solidShape1 = new G4Cons("Shape1", shape1_rmina, shape1_rmaxa, shape1_rminb, shape1_rmaxb,
-  //  shape1_hz, shape1_phimin, shape1_phimax);
-  
-  auto solidShape1 = new G4Box("Shape1",                    // its name
-    0.5 * env_sizeXY, 0.5 * env_sizeXY, 1 * mm);
+  G4ThreeVector pos1 = G4ThreeVector(0, 0*cm, 0*cm);
+  G4double BeWindow_thick = 5 * mm;
+  auto solidShape1 = new G4Box("BeWindow",                    // its name
+    0.5 * env_sizeXY, 0.5 * env_sizeXY, BeWindow_thick);
 
   auto logicShape1 = new G4LogicalVolume(solidShape1,  // its solid
-    Be,                                        // its material
-    "Shape1");                                         // its name
+    Al,                                        // its material
+    "BeWindow_L");                                         // its name
 
   new G4PVPlacement(nullptr,  // no rotation
     pos1,                     // at position
     logicShape1,              // its logical volume
-    "Shape1",                 // its name
+    "BeWindow_P",                 // its name
     logicEnv,                 // its mother  volume
     false,                    // no boolean operation
     0,                        // copy number
@@ -142,25 +118,23 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   //
   // Shape 2
   //
-  G4Material* shape2_mat = nist->FindOrBuildMaterial("G4_BONE_COMPACT_ICRU");
-  G4Material* CdTe = nist->FindOrBuildMaterial("G4_CADMIUM_TELLURIDE");
 
   G4ThreeVector pos2 = G4ThreeVector(0, 0*cm, 7*cm);
 
   // Trapezoid shape
-  G4double shape2_dxa = 12*cm, shape2_dxb = 12*cm;
-  G4double shape2_dya = 10*cm, shape2_dyb = 16*cm;
-  G4double shape2_dz  = 6*cm;
+  //G4double shape2_dxa = 12*cm, shape2_dxb = 12*cm;
+  //G4double shape2_dya = 10*cm, shape2_dyb = 16*cm;
+  //G4double shape2_dz  = 6*cm;
   //auto solidShape2 = new G4Trd("Shape2",  // its name
   //  0.5 * shape2_dxa, 0.5 * shape2_dxb, 0.5 * shape2_dya, 0.5 * shape2_dyb,
   //  0.5 * shape2_dz);  // its size
 
-  auto solidShape2 = new G4Box("Shape2",                    // its name
-    0.5 * env_sizeXY, 0.5 * env_sizeXY, 1 * mm);
+  //auto solidShape2 = new G4Box("Shape2",                    // its name
+  //  0.5 * env_sizeXY, 0.5 * env_sizeXY, 1 * mm);
 
-  auto logicShape2 = new G4LogicalVolume(solidShape2,  // its solid
-    CdTe,                                        // its material
-    "Shape2");                                         // its name
+  //auto logicShape2 = new G4LogicalVolume(solidShape2,  // its solid
+  //  Be,                                        // its material
+  //  "Shape2");                                         // its name
 
   //new G4PVPlacement(nullptr,  // no rotation
   //  pos2,                     // at position
@@ -175,8 +149,7 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   // - Sensitive detector -
   //-----------------------
 
-  G4ThreeVector pos3 = G4ThreeVector(0, 0*cm, 10*cm);
-
+  G4ThreeVector pos3 = G4ThreeVector(0, 0*cm, -5*cm);
   auto trackerSolid = new G4Box("tracker",  0.5 * 20 * cm, 0.5 * 20 * cm, 1 * mm);
   trackerLogicalVolume = new G4LogicalVolume(trackerSolid, CdTe, "Tracker", nullptr, nullptr, nullptr);
   auto trackerPhysicalVolume = new G4PVPlacement(nullptr, // no rotation
@@ -191,12 +164,12 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   //constexpr auto TRACKER_SENSITIVE_DETECTOR_NAME{"meddea/DetectorSD"};
   //auto *trackerSensitiveDetector = new calisteDetectorSD(TRACKER_SENSITIVE_DETECTOR_NAME);
   //SetSensitiveDetector(trackerLogicalVolume, trackerSensitiveDetector);
- //trackerVisualizationStyle = new G4VisAttributes();
-  //trackerVisualizationStyle->SetColor(G4Color(1.0, 1.0, 1.0)); // black
-  //trackerLogicalVolume->SetVisAttributes(trackerVisualizationStyle);
+  trackerVisualizationStyle = new G4VisAttributes();
+  trackerVisualizationStyle->SetColor(G4Color(1.0, 0.0, 0.0)); // red
+  trackerLogicalVolume->SetVisAttributes(trackerVisualizationStyle);
   // Set Shape2 as scoring volume
   //
-  fScoringVolume = logicShape2;
+  fScoringVolume = trackerLogicalVolume;
 
   return worldPhysicalVolume;
 }
@@ -210,11 +183,9 @@ void DetectorConstruction::ConstructSDandField()
   auto *trackerSensitiveDetector = new calisteDetectorSD(TRACKER_SENSITIVE_DETECTOR_NAME);
   sensitiveDetectorManager->AddNewDetector(trackerSensitiveDetector);
   // the following is the problem line
-          G4cout << "MySensitiveDetector::I'M HERE!! " << G4endl;
-
+  // G4cout << "MySensitiveDetector::I'M HERE!! " << G4endl;
   SetSensitiveDetector(trackerLogicalVolume, trackerSensitiveDetector);
-          G4cout << "MySensitiveDetector::I'M HERE 2!! " << G4endl;
-
+  //G4cout << "MySensitiveDetector::I'M HERE 2!! " << G4endl;
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

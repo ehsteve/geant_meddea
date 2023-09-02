@@ -33,8 +33,9 @@
 #include "G4VUserPrimaryGeneratorAction.hh"
 #include "G4ParticleGun.hh"
 #include "globals.hh"
+#include "G4VUserPrimaryGeneratorAction.hh"
 
-class G4ParticleGun;
+class G4GeneralParticleSource;
 class G4Event;
 class G4Box;
 
@@ -56,11 +57,12 @@ class PrimaryGeneratorAction : public G4VUserPrimaryGeneratorAction
     void GeneratePrimaries(G4Event*) override;
 
     // method to access particle gun
-    const G4ParticleGun* GetParticleGun() const { return fParticleGun; }
+    const G4GeneralParticleSource* GetParticleGun() const { return particleGun; }
 
   private:
-    G4ParticleGun* fParticleGun = nullptr; // pointer a to G4 gun class
-    G4Box* fEnvelopeBox = nullptr;
+    //G4ParticleGun* fParticleGun = nullptr; // pointer a to G4 gun class
+      G4GeneralParticleSource* particleGun = nullptr;
+      G4Box* fEnvelopeBox = nullptr;
 };
 
 }

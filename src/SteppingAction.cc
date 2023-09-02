@@ -30,6 +30,7 @@
 #include "SteppingAction.hh"
 #include "EventAction.hh"
 #include "DetectorConstruction.hh"
+#include "AnalysisManager.hh"
 
 #include "G4Step.hh"
 #include "G4Event.hh"
@@ -61,11 +62,33 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
       ->GetVolume()->GetLogicalVolume();
 
   // check if we are in scoring volume
-  if (volume != fScoringVolume) return;
+  //if (volume != fScoringVolume) return;
 
   // collect energy deposited in this step
   G4double edepStep = step->GetTotalEnergyDeposit();
   fEventAction->AddEdep(edepStep);
+
+  // add to book
+  G4bool entering = false;
+  G4Track* track = step->GetTrack();
+
+  G4String volName; 
+  if (track->GetVolume()) volName =  track->GetVolume()->GetName(); 
+  G4String nextVolName;
+  if (track->GetNextVolume()) nextVolName =  track->GetNextVolume()->GetName();
+
+  AnalysisManager* analysis = AnalysisManager::Instance();
+ 
+  // Entering Detector
+  if (volName != "Tracker" && nextVolName == "Tracker") 
+    {
+      entering = true;
+      //analysis->Update(track->GetKineticEnergy(),G4Threading::G4GetThreadId());
+    }
+
+  // Do the analysis related to this step
+  analysis->analyseStepping(*track, entering);
+  analysis->Score(track->GetKineticEnergy()/keV, track->GetPosition()/mm);
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

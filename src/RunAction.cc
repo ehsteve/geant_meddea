@@ -81,11 +81,12 @@ void RunAction::BeginOfRunAction(const G4Run *run)
     
   if (IsMaster()) {
       G4cout << "--- Run " << run->GetRunID() << " (master) start." << G4endl;
-      AnalysisManager::Instance();
+      
   } else {
       G4cout << "--- Run " << run->GetRunID() << " (worker) start." << G4endl;
   }
-
+  AnalysisManager* analysis = AnalysisManager::Instance();
+  analysis->book(IsMaster());
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -121,20 +122,24 @@ void RunAction::EndOfRunAction(const G4Run* run)
   G4String runCondition;
   if (generatorAction)
   {
-    const G4ParticleGun* particleGun = generatorAction->GetParticleGun();
-    runCondition += particleGun->GetParticleDefinition()->GetParticleName();
-    runCondition += " of ";
-    G4double particleEnergy = particleGun->GetParticleEnergy();
-    runCondition += G4BestUnit(particleEnergy,"Energy");
+    //const G4GeneralParticleSource* particleGun = generatorAction->GetParticleGun();
+    //runCondition += particleGun->GetParticleDefinition()->GetParticleName();
+    //runCondition += " of ";
+    //G4double particleEnergy = particleGun->GetParticleEnergy();
+    //runCondition += G4BestUnit(particleEnergy,"Energy");
   }
 
+  AnalysisManager* analysis = AnalysisManager::Instance();
+  analysis->finish(IsMaster());
   // Print
   //
   if (IsMaster()) {
+    
+    //analysis->Destroy();
     G4cout << "--- Run " << run->GetRunID() << " (master) end."
             << " Total number of events: " << run->GetNumberOfEvent() << "."
             << G4endl;
-        AnalysisManager::Instance()->Destroy();
+    //AnalysisManager::Instance()->Destroy();
   }
   else {
     G4cout << "--- Run " << run->GetRunID() << " (worker) end." << G4endl;
