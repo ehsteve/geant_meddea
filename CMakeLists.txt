@@ -46,6 +46,7 @@ set(MEDDEASIM_SCRIPTS
   init_vis.mac
   run1.mac
   run2.mac
+  run_angles_base.mac
   vis.mac
   tsg_offscreen.mac
   )
