@@ -1,7 +1,11 @@
+# output files
 build/*
 G4History.macro
 DetectorHitsList.csv
 DetectorHists*.root
+*.pdf
+*.png
+*.jpg
 
 # OS X
 # General
