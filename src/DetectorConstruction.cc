@@ -41,6 +41,7 @@
 #include "G4PVPlacement.hh"
 #include "G4SystemOfUnits.hh"
 #include "G4SDManager.hh"
+#include "G4SubtractionSolid.hh"
 
 namespace B1
 {
@@ -69,6 +70,41 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
   G4Material* W = nist->FindOrBuildMaterial("G4_W");  // Tungsten
   //G4Material* Be = new G4Material("Beryllium", 4., 9.012*g/mole, 1.850*g/cm3);  // is this right?
 
+  //geometry
+  //All geometry inside of world and inside of envelope
+
+  // Geometry values
+  G4double FrontToRearBaffleSeperation = 21.8*mm;
+  G4double RearBaffleToDetectorSeparation = 5.0*mm;
+  G4double DetectorBoxDepth = 3*cm;
+
+  // Volume Dimensions
+  G4double FrontBaffleThickness = 2.0*mm;
+  G4double FrontBaffleSideLength = 41.0*mm;
+  G4double FrontWindowSideLength = 16.0*mm;  // bigger than rear window to accomodate 6 deg field of view
+
+  G4double RearBaffleThickness = 2.0*mm;
+  G4double RearBaffleSideLength = FrontBaffleSideLength;
+  G4double RearWindowSideLength = 10.0*mm;
+
+  G4double BoxThickness = 0.5*mm;
+  G4double BoxSideLength = FrontBaffleSideLength + 2 * BoxThickness;
+  G4double BoxDepth = 2 * (FrontToRearBaffleSeperation + RearBaffleToDetectorSeparation);
+
+  G4double DetectorThickness = 1.0*mm;
+  G4double DetectorSideLength = 10.0*mm;
+  G4double DetectorFilterThickness = 1.5*mm;
+  G4double FrontApertureFilterThickness = 1.5*mm;
+
+  // Volume positions - origin is at detector center
+  auto rearBafflePosition = G4ThreeVector(.0*cm, 0.0*cm, DetectorThickness/2.0 + RearBaffleToDetectorSeparation);
+  auto frontBafflePosition = G4ThreeVector(.0*cm, 0.0*cm,  DetectorThickness/2.0 + RearBaffleToDetectorSeparation + FrontToRearBaffleSeperation);
+  auto boxBottomPosition = G4ThreeVector(.0*cm, 0.0*cm,  -BoxDepth/2.0);
+  auto detectorFilterPosition = G4ThreeVector(.0*cm, 0.0*cm,  DetectorThickness/2.0 + RearBaffleToDetectorSeparation);
+  auto frontFilterPosition = G4ThreeVector(.0*cm, 0.0*cm,  DetectorThickness/2.0 + RearBaffleToDetectorSeparation + FrontToRearBaffleSeperation);
+  auto boxPosition = G4ThreeVector( 0*cm, 0.0*cm, 0.0*cm);
+  G4ThreeVector pos1 = G4ThreeVector(0, 0*cm, 0*cm);
+
   auto worldSolid = new G4Box("World",                           
     0.5 * world_sizeXY, 0.5 * world_sizeXY, 0.5 * world_sizeZ);  
   auto worldLogicalVolume = new G4LogicalVolume(worldSolid, Vacuum, "World");
@@ -94,72 +130,68 @@ G4VPhysicalVolume* DetectorConstruction::Construct()
     0,                        // copy number
     checkOverlaps);           // overlaps checking
 
-  // Shape 1
-  //
+  // Front Baffle - square with square hole
+  G4Box *frontouterBox = new G4Box("Front Window outer",FrontBaffleSideLength/2.0,FrontBaffleSideLength/2.0,FrontBaffleThickness/2.0);
+  G4Box *frontinnerBox = new G4Box("Front Window inner",FrontWindowSideLength/2.0,FrontWindowSideLength/2.0,FrontBaffleThickness/2.0 + 1*cm);  // add buffer to ensure cut occurs
+  G4SubtractionSolid *frontBaffle = new G4SubtractionSolid("FrontBaffle_S",frontouterBox,frontinnerBox);
+  G4LogicalVolume *frontBaffleLogicalVolume = new G4LogicalVolume( frontBaffle, W, "FrontBaffle_L", 0, 0, 0 );
+  new G4PVPlacement( nullptr, frontBafflePosition, frontBaffleLogicalVolume, "FrontBaffle_P", logicEnv, false, 0, checkOverlaps);
 
-  G4ThreeVector pos1 = G4ThreeVector(0, 0*cm, 0*cm);
-  G4double BeWindow_thick = 5 * mm;
-  auto solidShape1 = new G4Box("BeWindow",                    // its name
-    0.5 * env_sizeXY, 0.5 * env_sizeXY, BeWindow_thick);
+  // Rear Baffle - square with square hole
+  G4Box *rearouterBox = new G4Box("Rear Window outer",RearBaffleSideLength/2.0,RearBaffleSideLength/2.0,RearBaffleThickness/2.0);
+  G4Box *rearinnerBox = new G4Box("Rear Window inner",RearWindowSideLength/2.0,RearWindowSideLength/2.0,RearBaffleThickness/2.0 + 1*cm);  // add buffer to ensure cut occurs
+  G4SubtractionSolid *rearBaffle = new G4SubtractionSolid("RearBaffle_S",rearouterBox,rearinnerBox);
+  G4LogicalVolume* rearBaffleLogicalVolume;
+  rearBaffleLogicalVolume = new G4LogicalVolume( rearBaffle, W, "RearBaffle_L", 0, 0, 0 );
+  new G4PVPlacement(nullptr, rearBafflePosition, rearBaffleLogicalVolume, "RearBaffle_P", logicEnv, false, 0, checkOverlaps);
 
-  auto logicShape1 = new G4LogicalVolume(solidShape1,  // its solid
-    Al,                                        // its material
-    "BeWindow_L");                                         // its name
+  // Baffle box
+  G4Box *outerBox = new G4Box("Box outer",BoxSideLength/2.,BoxSideLength/2.,BoxDepth/2.0);
+  G4Box *innerBox = new G4Box("Box inner",BoxSideLength/2.-BoxThickness,BoxSideLength/2.-BoxThickness,BoxDepth/2.0 + 1 * cm);
+  G4SubtractionSolid *box = new G4SubtractionSolid("Box_S",outerBox,innerBox);
+  G4LogicalVolume* boxLogicalVolume;
+  boxLogicalVolume = new G4LogicalVolume( box, Al, "Box_L", 0, 0, 0 );
+  new G4PVPlacement(nullptr, boxPosition, boxLogicalVolume, "Box_P", logicEnv, false, 0, checkOverlaps);
+  
+  auto boxVisStyle = new G4VisAttributes();
+  boxVisStyle->SetColor(G4Color(0.3, 0.3, 0.3)); // red
+  boxVisStyle->SetForceWireframe(true);
+  boxLogicalVolume->SetVisAttributes(boxVisStyle);
+  // Baffle box - rear plate
+  auto outerBoxRearSolidShape = new G4Box("BoxRear", BoxSideLength/2.,BoxSideLength/2.,BoxThickness/2.0);
+  auto outerBoxRearSolidVolume = new G4LogicalVolume(outerBoxRearSolidShape, Al, "BoxRear_L");
+  new G4PVPlacement(nullptr, boxBottomPosition, outerBoxRearSolidVolume, "BoxRear_P", logicEnv, false, 0, checkOverlaps);
 
-  new G4PVPlacement(nullptr,  // no rotation
-    pos1,                     // at position
-    logicShape1,              // its logical volume
-    "BeWindow_P",                 // its name
-    logicEnv,                 // its mother  volume
-    false,                    // no boolean operation
-    0,                        // copy number
-    checkOverlaps);           // overlaps checking
+  // Detector and Detector Filter
 
-  //
-  // Shape 2
-  //
+  // Detector Filter
+  auto detFilterSolidShape = new G4Box("DetectorFilter_S", DetectorSideLength/2.0, DetectorSideLength/2.0, DetectorFilterThickness/2.0);
+  auto detFilterSolidVolume = new G4LogicalVolume(detFilterSolidShape, Be, "DetectorFilter_L");
+  new G4PVPlacement(nullptr, detectorFilterPosition, detFilterSolidVolume, "DetectorFilter_P", logicEnv, false, 0, checkOverlaps);
+  auto detFilterVisStyle = new G4VisAttributes();
+  detFilterVisStyle->SetColor(G4Color(0.0, 0.0, 1.0)); // green
+  detFilterSolidVolume->SetVisAttributes(detFilterVisStyle);
 
-  G4ThreeVector pos2 = G4ThreeVector(0, 0*cm, 7*cm);
-
-  // Trapezoid shape
-  //G4double shape2_dxa = 12*cm, shape2_dxb = 12*cm;
-  //G4double shape2_dya = 10*cm, shape2_dyb = 16*cm;
-  //G4double shape2_dz  = 6*cm;
-  //auto solidShape2 = new G4Trd("Shape2",  // its name
-  //  0.5 * shape2_dxa, 0.5 * shape2_dxb, 0.5 * shape2_dya, 0.5 * shape2_dyb,
-  //  0.5 * shape2_dz);  // its size
-
-  //auto solidShape2 = new G4Box("Shape2",                    // its name
-  //  0.5 * env_sizeXY, 0.5 * env_sizeXY, 1 * mm);
-
-  //auto logicShape2 = new G4LogicalVolume(solidShape2,  // its solid
-  //  Be,                                        // its material
-  //  "Shape2");                                         // its name
-
-  //new G4PVPlacement(nullptr,  // no rotation
-  //  pos2,                     // at position
-  //  logicShape2,              // its logical volume
-  //  "Shape2",                 // its name
-  //  logicEnv,                 // its mother  volume
-  //  false,                    // no boolean operation
-  //  0,                        // copy number
-  //  checkOverlaps);           // overlaps checking
-
+  // Front Aperture Filter
+  auto frontFilterSolidShape = new G4Box("FrontFilter_S", FrontWindowSideLength/2.0, FrontWindowSideLength/2.0, DetectorFilterThickness/2.0);
+  auto frontFilterSolidVolume = new G4LogicalVolume(frontFilterSolidShape, Be, "FrontFilter_L");
+  new G4PVPlacement(nullptr, frontFilterPosition, frontFilterSolidVolume, "FrontFilter_P", logicEnv, false, 0, checkOverlaps);
+  auto frontFilterVisStyle = new G4VisAttributes();
+  frontFilterVisStyle->SetColor(G4Color(0.0, 0.0, 1.0)); // green
+  frontFilterSolidVolume->SetVisAttributes(frontFilterVisStyle);
   //-----------------------
   // - Sensitive detector -
   //-----------------------
-
-  G4ThreeVector pos3 = G4ThreeVector(0, 0*cm, -5*cm);
-  auto trackerSolid = new G4Box("tracker",  0.5 * 20 * cm, 0.5 * 20 * cm, 1 * mm);
+  auto trackerSolid = new G4Box("tracker",  DetectorSideLength/2.0, DetectorSideLength/2.0, DetectorThickness/2.0);
   trackerLogicalVolume = new G4LogicalVolume(trackerSolid, CdTe, "Tracker", nullptr, nullptr, nullptr);
-  auto trackerPhysicalVolume = new G4PVPlacement(nullptr, // no rotation
-      pos3, // at (x, y, z)
-      trackerLogicalVolume, // its logical volume
-      "Tracker", // its name
-      logicEnv, // its mother volume
-      false,
-      0, // no boolean operations
-      checkOverlaps); // copy number
+  auto trackerPhysicalVolume = new G4PVPlacement(nullptr,
+    G4ThreeVector(0*cm, 0*cm, 0*cm),
+    trackerLogicalVolume,
+    "Tracker",
+    logicEnv,
+    false,
+    0,
+    checkOverlaps);
 
   //constexpr auto TRACKER_SENSITIVE_DETECTOR_NAME{"meddea/DetectorSD"};
   //auto *trackerSensitiveDetector = new calisteDetectorSD(TRACKER_SENSITIVE_DETECTOR_NAME);
