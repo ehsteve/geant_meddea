@@ -5,15 +5,24 @@ import subprocess
 import shutil
 from scipy.spatial.transform import Rotation
 from numpy.linalg import norm
+import os
 
-angle_arr = np.sort(np.concatenate([np.arange(-45, 45, 5), np.arange(-4, 4, 1)]))
+# clean up
+if os.path.exists('../data/angle_run'):
+    shutil.rmtree('../data/angle_run/')
+os.mkdir('../data/angle_run/')
+
+#angle_arr = np.sort(np.concatenate([np.arange(-45, 45, 5), np.arange(-4, 5, 1)]))
+#angle_arr = np.linspace(-1, 1, 3, dtype='int')
+angle_arr1 = np.arange(-10, 11, 1)  # degrees
+angle_arr2 = np.array([0, 10, 15, 20, 25, 30])
+angle_arr = np.sort(np.concatenate([angle_arr1, angle_arr2]))
+
 print(angle_arr)
-
-angle_arr = np.linspace(-45, 45, 3)
 
 tstart = datetime.now()
 
-num_beam = 1000
+num_beam = 1000000
 
 orig_beam_direction = [0, 0, -1]
 rot_axis = [1, 0, 0]
@@ -33,13 +42,13 @@ for this_angle in angle_arr:
     # reposition the beam to keep illumination centered on detector
     with open('../build/this_angle_run.mac', 'a') as fp:
         fp.write(f'/gps/direction {new_beam_direction[0]:.4f} {new_beam_direction[1]:.4f} {new_beam_direction[2]:.4f}\n')
-        fp.write(f'/gps/pos/centre 0. {-beam_z_position * np.sin(this_angle):.2f} {beam_z_position:.2f} cm\n')
+        fp.write(f'/gps/pos/centre 0. {-beam_z_position * np.sin(theta):.2f} {beam_z_position:.2f} cm\n')
         fp.write(f'/run/beamOn {num_beam}')
 
     # run geant4 sim
     subprocess.run(["../build/meddea_sim", "../build/this_angle_run.mac"])
     # rename output root file and move it into new directory
-    new_filename = f"../data/DetectorHists_angleX{this_angle}.root"
+    new_filename = f"../data/angle_run/DetectorHists_angleX{this_angle}.root"
     os.rename("DetectorHists.root", new_filename)
 
 tend = datetime.now()

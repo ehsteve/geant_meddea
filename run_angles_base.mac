@@ -16,8 +16,8 @@
 /gps/pos/type Plane
 /gps/pos/shape Square
 #/gps/pos/centre 0. 0. 10. cm
-/gps/pos/halfx 10. cm
-/gps/pos/halfy 10. cm
+/gps/pos/halfx 4. cm
+/gps/pos/halfy 4. cm
 
 # energy distribution of the source
 #/gps/ene/type Mono
