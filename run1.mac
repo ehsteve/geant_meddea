@@ -38,20 +38,21 @@
 /gps/pos/type Plane
 /gps/pos/shape Square
 #/gps/pos/centre 0. 0. 10. cm
-/gps/pos/halfx 10. cm
-/gps/pos/halfy 10. cm
+/gps/pos/halfx 40. mm
+/gps/pos/halfy 40. mm
 #/gps/pos/rot1 1. 0. 0.
 #/gps/pos/rot1 0. 1. 0.
-/gps/pos/centre 0. -8.51 10.00 cm
+#/gps/pos/centre 0. -8.51 10.00 cm
 
-/gps/ene/type Mono
-/gps/ene/mono 50 keV
+#/gps/ene/type Mono
+#/gps/ene/mono 100 keV
 
-#/gps/ene/type Lin
-#/gps/ene/gradient 1.
-#/gps/ene/intercept 0.
-#/gps/ene/min 1. keV
-#/gps/ene/max 100. keV
+/gps/ene/type Pow
+/gps/ene/min 1. keV
+/gps/ene/max 100. keV
+/gps/ene/alpha 0.
 
-/gps/direction 0.0000 0.7071 -0.7071
+#/gps/direction 0.0000 0.7071 -0.7071
+/gps/direction 0.0000 0.0175 -0.9998
+/gps/pos/centre 0. -0.17 10.00 cm
 /run/beamOn 1000
