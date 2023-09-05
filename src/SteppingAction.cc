@@ -87,7 +87,7 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
     }
 
   // Do the analysis related to this step
-  analysis->analyseStepping(*track, entering);
+  analysis->analyseStepping(*track, entering, false);
   analysis->Score(track->GetKineticEnergy()/keV, track->GetPosition()/mm);
 }
 

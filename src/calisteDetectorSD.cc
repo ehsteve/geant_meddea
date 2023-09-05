@@ -37,6 +37,8 @@
 #include "G4SDManager.hh"
 #include "G4Step.hh"
 #include "G4ThreeVector.hh"
+#include "AnalysisManager.hh"
+
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo....
 
@@ -69,9 +71,10 @@ void calisteDetectorSD::Initialize(G4HCofThisEvent* collection)
 
 auto calisteDetectorSD::ProcessHits(G4Step* step, G4TouchableHistory*) -> G4bool
 {
-    if (step->GetTrack()->GetDefinition() != G4Gamma::GammaDefinition()) {
-        return false;
-    }
+    //if (step->GetTrack()->GetDefinition() != G4Gamma::GammaDefinition()) {
+    //    return false;
+    //}
+    G4Track* track = step->GetTrack();
 
     // auto depositedEnergy = step->GetTotalEnergyDeposit();
     auto depositedEnergy = step->GetPreStepPoint()->GetKineticEnergy();
@@ -86,6 +89,10 @@ auto calisteDetectorSD::ProcessHits(G4Step* step, G4TouchableHistory*) -> G4bool
     newHit->SetPosition(step->GetPostStepPoint()->GetPosition());
     trackerCollection->insert(newHit);
 
+    //AnalysisManager* analysis = AnalysisManager::Instance();
+    //analysis->analyseStepping(*track, false, true);
+    //analysis->Score(track->GetKineticEnergy()/keV, track->GetPosition()/mm);
+    
     // newHit->Print();
     // newHit->Draw();
 

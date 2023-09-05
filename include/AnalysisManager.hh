@@ -57,7 +57,7 @@ public:
     // Member function used to dump hits into csv file
     void Score(G4double depositedEnergy, G4ThreeVector position);
 
-    void analyseStepping(const G4Track& track, G4bool entering);
+    void analyseStepping(const G4Track& track, G4bool entering, G4bool inDetector);
     void book(G4bool isMaster);
     void Update(G4double energy,G4int threadID);
     void bookScore(G4double energy, G4ThreeVector position, G4int threadID);

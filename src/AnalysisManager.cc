@@ -118,13 +118,16 @@ void AnalysisManager::book(G4bool isMaster)
     //    G4cout << " done" << G4endl;
 
    // Book 1D histograms
-  man->CreateH1("h1","Energy, all /keV",  1000,0.,100.);
-  man->CreateH1("h2","Energy, entering detector /keV", 500,0.,100.);
+  man->CreateH1("h1","Energy, all /keV",  100,1.,100.);
+  man->CreateH1("h2","Energy, entering detector /keV", 100,1.,100.);
+  
+  man->CreateH1("h3","Energy in detector, all /keV",  100,1.,100.);
 
   // Book 2D histograms (notice: the numbering is independent)
   man->CreateH2("d1","x-y, all /mm", 100,-100.,100.,100,-100.,100.); 
   man->CreateH2("d2","x-y, entering detector /mm", 200,-50.,50.,200,-50.,50.);
-  
+  man->CreateH2("d3","x-y, detector hit /mm", 200,-50.,50.,200,-50.,50.);
+
   // Book ntuples
   man->CreateNtuple("tree", "Track ntuple");
   man->CreateNtupleDColumn("energy");
@@ -148,8 +151,6 @@ void AnalysisManager::finish(G4bool isMaster)
 
   if (!isMaster)
     return;
-
-
 }
 
 void AnalysisManager::bookScore(G4double energy, G4ThreeVector position, G4int threadID){
@@ -160,7 +161,7 @@ void AnalysisManager::Update(G4double energy,G4int threadID){
 
 }
 
-void AnalysisManager::analyseStepping(const G4Track& track, G4bool entering){
+void AnalysisManager::analyseStepping(const G4Track& track, G4bool entering, G4bool inDetector){
   G4AutoLock l(&dataManipulationMutex);
   eKin = track.GetKineticEnergy()/keV;
   G4ThreeVector pos = track.GetPosition()/mm;
@@ -190,7 +191,12 @@ void AnalysisManager::analyseStepping(const G4Track& track, G4bool entering){
     man->FillNtupleDColumn(4,dirX);
     man->FillNtupleDColumn(5,dirY);
     man->FillNtupleDColumn(6,dirZ);
-    man->AddNtupleRow();  
+    man->AddNtupleRow();
+  }
+  if (inDetector) {
+    // Fill and plot histograms
+    man->FillH1(3,eKin);
+    man->FillH2(3,x,y);
   }
 
 }
