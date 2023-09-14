@@ -38,13 +38,14 @@
 #include "G4ios.hh"
 #include "G4AnalysisManager.hh"
 
-class AnalysisManager {
+class AnalysisManager
+{
 
 public:
     // The analysis class is designed to be a singleton (i.e. only one instance can exist).
     // A member function called Instance is defined, which allows the user to get
     // a pointer to the existing instance or to create it, if it does not yet exist.
-    static auto Instance() -> AnalysisManager*;
+    static auto Instance() -> AnalysisManager *;
 
     // The analysis class instance can be deleted by calling the Destroy method.
     // (NOTE: The class destructor is protected, and can thus not be called directly)
@@ -57,9 +58,9 @@ public:
     // Member function used to dump hits into csv file
     void Score(G4double depositedEnergy, G4ThreeVector position);
 
-    void analyseStepping(const G4Track& track, G4bool entering, G4bool inDetector);
+    void analyseStepping(const G4Track &track, G4bool entering, G4bool inDetector, G4int detectorNum);
     void book(G4bool isMaster);
-    void Update(G4double energy,G4int threadID);
+    void Update(G4double energy, G4int threadID);
     void bookScore(G4double energy, G4ThreeVector position, G4int threadID);
 
 protected:
@@ -70,28 +71,33 @@ protected:
     virtual ~AnalysisManager();
 
     // Prevent copying
-    AnalysisManager(const AnalysisManager& only);
-    
-    auto operator=(const AnalysisManager& only) -> const AnalysisManager&;
+    AnalysisManager(const AnalysisManager &only);
 
-private:    
-    static AnalysisManager* instance; // The static instance of the AnalysisManager class
+    auto operator=(const AnalysisManager &only) -> const AnalysisManager &;
+
+private:
+    static AnalysisManager *instance; // The static instance of the AnalysisManager class
     G4String histFileName;
     G4String asciiFileName;
 
-  // Quantities for the ntuple
-  G4double eKin;
-  G4double x;
-  G4double y;
-  G4double z;
-  G4double dirX;
-  G4double dirY;
-  G4double dirZ;
+    // Quantities for the ntuple
+    G4double eKin;
+    G4double eKin0;
+
+    G4double x;
+    G4double y;
+    G4double z;
+    G4double x0;
+    G4double y0;
+    G4double z0;
+    G4double dirX;
+    G4double dirY;
+    G4double dirZ;
 
     std::ofstream csvFile;
 
-    //global counters: log separately for each thread (or sequential)
-    std::map<G4int,G4int> *nEnteringTracks;
-    std::map<G4int,G4double> *totEnteringEnergy;
+    // global counters: log separately for each thread (or sequential)
+    std::map<G4int, G4int> *nEnteringTracks;
+    std::map<G4int, G4double> *totEnteringEnergy;
 };
 #endif // ANALYSISMANAGER_HH

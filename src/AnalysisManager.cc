@@ -33,100 +33,112 @@
 
 AnalysisManager *AnalysisManager::instance{nullptr};
 
-namespace { 
-  //Mutex to acquire access to singleton instance check/creation
+namespace
+{
+  // Mutex to acquire access to singleton instance check/creation
   G4Mutex instanceMutex = G4MUTEX_INITIALIZER;
-  //Mutex to acquire accss to histograms creation/access
-  //It is also used to control all operations related to histos 
-  //File writing and check analysis
+  // Mutex to acquire accss to histograms creation/access
+  // It is also used to control all operations related to histos
+  // File writing and check analysis
   G4Mutex dataManipulationMutex = G4MUTEX_INITIALIZER;
 }
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo....
 
 AnalysisManager::AnalysisManager()
 {
-    histFileName = "DetectorHists";
-    csvFile.open("DetectorHitsList.csv"); // open the file
-    (csvFile) << "Energy (keV), x (mm), y (mm), z (mm)" << G4endl;  
-//    dataFile2.open("TotalEnergy.out"); // open the file
-
+  histFileName = "DetectorHists";
+  csvFile.open("DetectorHitsList.csv"); // open the file
+  (csvFile) << "Energy (keV), x (mm), y (mm), z (mm)" << G4endl;
+  //    dataFile2.open("TotalEnergy.out"); // open the file
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo....
 
 AnalysisManager::~AnalysisManager()
 {
-    csvFile.close(); // close the file
-//    dataFile2.close(); // close the file
+  csvFile.close(); // close the file
+  //    dataFile2.close(); // close the file
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo....
 
-auto AnalysisManager::Instance() -> AnalysisManager*
+auto AnalysisManager::Instance() -> AnalysisManager *
 {
-    G4AutoLock l(&instanceMutex);
-    // A new instance of AnalysisManager is created, if it does not exist:
-    if (instance == nullptr) {
-        instance = new AnalysisManager();
-    }
+  G4AutoLock l(&instanceMutex);
+  // A new instance of AnalysisManager is created, if it does not exist:
+  if (instance == nullptr)
+  {
+    instance = new AnalysisManager();
+  }
 
-    // The instance of AnalysisManager is returned:
-    return instance;
+  // The instance of AnalysisManager is returned:
+  return instance;
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo....
 
 void AnalysisManager::Destroy()
 {
-    // The AnalysisManager instance is deleted, if it exists:
-    if (instance != nullptr) {
-        delete instance;
-        instance = nullptr;
-    }
+  // The AnalysisManager instance is deleted, if it exists:
+  if (instance != nullptr)
+  {
+    delete instance;
+    instance = nullptr;
+  }
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo....
 
 void AnalysisManager::Score(G4double depositedEnergy, G4ThreeVector position)
 {
-    // write data into the data file
-    csvFile << depositedEnergy/keV << "," << position.x()/mm << "," << position.y()/mm << "," << position.z()/mm << std::endl;
+  // write data into the data file
+  csvFile << depositedEnergy / keV << "," << position.x() / mm << "," << position.y() / mm << "," << position.z() / mm << std::endl;
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo....
 
 void AnalysisManager::ScoreTotalEnergy(G4double totalDepositedEnergy)
 {
-    //dataFile2 << totalDepositedEnergy << std::endl;
+  // dataFile2 << totalDepositedEnergy << std::endl;
 }
 
 void AnalysisManager::book(G4bool isMaster)
 {
-    G4AutoLock l(&dataManipulationMutex);
+  G4AutoLock l(&dataManipulationMutex);
 
-    // Get/create analysis manager
-    G4AnalysisManager* man = G4AnalysisManager::Instance();
-    man->SetDefaultFileType("root");
+  // Get/create analysis manager
+  G4AnalysisManager *man = G4AnalysisManager::Instance();
+  man->SetDefaultFileType("root");
 
-    // Open an output file: it is done in master and threads. The 
-    // printout is done only by the master, for tidyness
-    //if (isMaster)
-    //    G4cout << "Opening output file " << histFileName << " ... ";
-    man->OpenFile(histFileName);
-    man->SetFirstHistoId(1);
-    //if (isMaster)
-    //    G4cout << " done" << G4endl;
+  // Open an output file: it is done in master and threads. The
+  // printout is done only by the master, for tidyness
+  // if (isMaster)
+  //    G4cout << "Opening output file " << histFileName << " ... ";
+  man->OpenFile(histFileName);
+  man->SetFirstHistoId(1);
+  // if (isMaster)
+  //     G4cout << " done" << G4endl;
 
-   // Book 1D histograms
-  man->CreateH1("h1","Energy, all /keV",  100,1.,100.);
-  man->CreateH1("h2","Energy, entering detector /keV", 100,1.,100.);
-  
-  man->CreateH1("h3","Energy in detector, all /keV",  100,1.,100.);
+  // Book 1D histograms
+  man->CreateH1("det0", "Energy deposits Detector 0", 100, 1., 100., "keV", "cts"); // 0
+  man->CreateH1("det1", "Energy deposits Detector 1", 100, 1., 100., "keV", "cts"); // 1
+  man->CreateH1("det2", "Energy deposits Detector 2", 100, 1., 100., "keV", "cts"); // 2
+  man->CreateH1("det4", "Energy deposits Detector 3", 100, 1., 100., "keV", "cts"); // 3
+  man->CreateH1("alldet", "Energy deposits all dets", 100, 1., 100.);              // 4
+  man->CreateH1("origE", "Original Energy", 100, 1., 100., "keV", "cts");          // 5
+
+  man->CreateH1("h3", "Energy in detector, all /keV", 100, 1., 100.);
 
   // Book 2D histograms (notice: the numbering is independent)
-  man->CreateH2("d1","x-y, all /mm", 100,-100.,100.,100,-100.,100.); 
-  man->CreateH2("d2","x-y, entering detector /mm", 200,-50.,50.,200,-50.,50.);
-  man->CreateH2("d3","x-y, detector hit /mm", 200,-50.,50.,200,-50.,50.);
+  man->CreateH2("det0_xy", "Detector 0 x-y", 100, -40., 40., 100, -40., 40., "mm", "mm");      // 0
+  man->CreateH2("det1_xy", "Detector 1 x-y", 100, -40., 40., 100, -40., 40., "mm", "mm");      // 1
+  man->CreateH2("det2_xy", "Detector 2 x-y", 100, -40., 40., 100, -40., 40., "mm", "mm");      // 2
+  man->CreateH2("det3_xy", "Detector 3 x-y", 100, -40., 40., 100, -40., 40., "mm", "mm");      // 3
+  man->CreateH2("alldet_xy", "All Detectors x-y", 100, -40., 40., 100, -40., 40., "mm", "mm"); // 4
+  man->CreateH2("orig_xy", "Original x-y", 100, -40., 40., 100, -40., 40., "mm", "mm"); // 5
+
+  man->CreateH2("d2", "x-y, entering detector /mm", 200, -50., 50., 200, -50., 50.);
+  man->CreateH2("d3", "x-y, detector hit /mm", 200, -50., 50., 200, -50., 50.);
 
   // Book ntuples
   man->CreateNtuple("tree", "Track ntuple");
@@ -137,6 +149,7 @@ void AnalysisManager::book(G4bool isMaster)
   man->CreateNtupleDColumn("dirx");
   man->CreateNtupleDColumn("diry");
   man->CreateNtupleDColumn("dirz");
+  man->CreateNtupleDColumn("detectorNum");
   man->FinishNtuple();
 }
 
@@ -144,7 +157,7 @@ void AnalysisManager::finish(G4bool isMaster)
 {
   G4AutoLock l(&dataManipulationMutex);
   // Save histograms
-  G4AnalysisManager* man = G4AnalysisManager::Instance();
+  G4AnalysisManager *man = G4AnalysisManager::Instance();
   man->Write();
   man->CloseFile();
   man->Clear();
@@ -153,18 +166,19 @@ void AnalysisManager::finish(G4bool isMaster)
     return;
 }
 
-void AnalysisManager::bookScore(G4double energy, G4ThreeVector position, G4int threadID){
-    
+void AnalysisManager::bookScore(G4double energy, G4ThreeVector position, G4int threadID)
+{
 }
 
-void AnalysisManager::Update(G4double energy,G4int threadID){
-
+void AnalysisManager::Update(G4double energy, G4int threadID)
+{
 }
 
-void AnalysisManager::analyseStepping(const G4Track& track, G4bool entering, G4bool inDetector){
+void AnalysisManager::analyseStepping(const G4Track &track, G4bool entering, G4bool inDetector, G4int detectorNum)
+{
   G4AutoLock l(&dataManipulationMutex);
-  eKin = track.GetKineticEnergy()/keV;
-  G4ThreeVector pos = track.GetPosition()/mm;
+  eKin = track.GetKineticEnergy() / keV;
+  G4ThreeVector pos = track.GetPosition() / mm;
   y = pos.y();
   z = pos.z();
   x = pos.x();
@@ -173,30 +187,45 @@ void AnalysisManager::analyseStepping(const G4Track& track, G4bool entering, G4b
   dirY = dir.y();
   dirZ = dir.z();
 
+  // get original energy and position
+  eKin0 = track.GetVertexKineticEnergy() / keV;
+  G4ThreeVector pos0 = track.GetVertexPosition() / mm;
+  y0 = pos0.y();
+  z0 = pos0.z();
+  x0 = pos0.x();
+
   // Fill histograms
-  G4AnalysisManager* man = G4AnalysisManager::Instance();
-  man->FillH1(1,eKin);
-  man->FillH2(1,x,y);
-  
+  G4AnalysisManager *man = G4AnalysisManager::Instance();
+
+  man->FillH1(detectorNum, eKin);
+  man->FillH2(detectorNum, x, y);
+
+  man->FillH1(4, eKin); // for all detectors
+  man->FillH2(4, x, y);
+
+  man->FillH1(5, eKin0); // original energy
+  man->FillH2(5, x0, y0); // original position
+
+  man->FillNtupleDColumn(0, eKin);
+  man->FillNtupleDColumn(1, x);
+  man->FillNtupleDColumn(2, y);
+  man->FillNtupleDColumn(3, z);
+  man->FillNtupleDColumn(4, dirX);
+  man->FillNtupleDColumn(5, dirY);
+  man->FillNtupleDColumn(6, dirZ);
+  man->FillNtupleDColumn(7, detectorNum);
+  man->AddNtupleRow();
+
   // Fill histograms and ntuple, tracks entering the detector
-  if (entering) {
+  if (entering)
+  {
     // Fill and plot histograms
-    man->FillH1(2,eKin);
-    man->FillH2(2,x,y);
-
-    man->FillNtupleDColumn(0,eKin);
-    man->FillNtupleDColumn(1,x);
-    man->FillNtupleDColumn(2,y);
-    man->FillNtupleDColumn(3,z);
-    man->FillNtupleDColumn(4,dirX);
-    man->FillNtupleDColumn(5,dirY);
-    man->FillNtupleDColumn(6,dirZ);
-    man->AddNtupleRow();
+    man->FillH1(6, eKin);
   }
-  if (inDetector) {
+  if (inDetector)
+  {
     // Fill and plot histograms
-    man->FillH1(3,eKin);
-    man->FillH2(3,x,y);
+    //man->FillH1(3, eKin);
+    //man->FillH2(3, x, y);
   }
-
 }

@@ -40,57 +40,84 @@
 namespace B1
 {
 
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+  //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-SteppingAction::SteppingAction(EventAction* eventAction)
-: fEventAction(eventAction)
-{}
-
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
-
-void SteppingAction::UserSteppingAction(const G4Step* step)
-{
-  if (!fScoringVolume) {
-    const auto detConstruction = static_cast<const DetectorConstruction*>(
-      G4RunManager::GetRunManager()->GetUserDetectorConstruction());
-    fScoringVolume = detConstruction->GetScoringVolume();
+  SteppingAction::SteppingAction(EventAction *eventAction)
+      : fEventAction(eventAction)
+  {
   }
 
-  // get volume of the current step
-  G4LogicalVolume* volume
-    = step->GetPreStepPoint()->GetTouchableHandle()
-      ->GetVolume()->GetLogicalVolume();
+  //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-  // check if we are in scoring volume
-  //if (volume != fScoringVolume) return;
-
-  // collect energy deposited in this step
-  G4double edepStep = step->GetTotalEnergyDeposit();
-  fEventAction->AddEdep(edepStep);
-
-  // add to book
-  G4bool entering = false;
-  G4Track* track = step->GetTrack();
-
-  G4String volName; 
-  if (track->GetVolume()) volName =  track->GetVolume()->GetName(); 
-  G4String nextVolName;
-  if (track->GetNextVolume()) nextVolName =  track->GetNextVolume()->GetName();
-
-  AnalysisManager* analysis = AnalysisManager::Instance();
- 
-  // Entering Detector
-  if (volName != "Tracker" && nextVolName == "Tracker") 
+  void SteppingAction::UserSteppingAction(const G4Step *step)
+  {
+    if (!fScoringVolume)
     {
-      entering = true;
-      //analysis->Update(track->GetKineticEnergy(),G4Threading::G4GetThreadId());
+      const auto detConstruction = static_cast<const DetectorConstruction *>(
+          G4RunManager::GetRunManager()->GetUserDetectorConstruction());
+      fScoringVolume = detConstruction->GetScoringVolume();
     }
 
-  // Do the analysis related to this step
-  analysis->analyseStepping(*track, entering, false);
-  analysis->Score(track->GetKineticEnergy()/keV, track->GetPosition()/mm);
-}
+    // get volume of the current step
+    G4LogicalVolume *volume = step->GetPreStepPoint()->GetTouchableHandle()->GetVolume()->GetLogicalVolume();
+    G4String volName;
+    G4String nextVolName;
 
-//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+    volName = volume->GetName();
+
+    // check if we are in scoring volume
+    // if (volume != fScoringVolume) return;
+    if (volName != "tracker_0" && volName != "tracker_1" && volName != "tracker_2" && volName != "tracker_3")
+    {
+      return;
+    }
+    // G4cout << volName << G4endl;
+
+    AnalysisManager *analysis = AnalysisManager::Instance();
+
+    G4int detectorNum;
+    if (volName == "tracker_0")
+    {
+      detectorNum = 0;
+    }
+    else if (volName == "tracker_1")
+    {
+      detectorNum = 1;
+    }
+    else if (volName == "tracker_2")
+    {
+      detectorNum = 2;
+    }
+    else if (volName == "tracker_3")
+    {
+      detectorNum = 3;
+    }
+
+    // collect energy deposited in this step
+    G4double edepStep = step->GetTotalEnergyDeposit();
+    fEventAction->AddEdep(edepStep);
+
+    // add to book
+    G4bool entering = false;
+    G4Track *track = step->GetTrack();
+
+    if (track->GetVolume())
+      volName = track->GetVolume()->GetName();
+    if (track->GetNextVolume())
+      nextVolName = track->GetNextVolume()->GetName();
+
+    // Entering Detector
+    if (volName != "tracker_1" && nextVolName == "tracker_1")
+    {
+      entering = true;
+      // analysis->Update(track->GetKineticEnergy(),G4Threading::G4GetThreadId());
+    }
+
+    // Do the analysis related to this step
+    analysis->analyseStepping(*track, entering, false, detectorNum);
+    //analysis->Score(track->GetKineticEnergy() / keV, track->GetPosition() / mm);
+  }
+
+  //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 }
