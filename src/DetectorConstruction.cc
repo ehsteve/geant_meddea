@@ -67,6 +67,7 @@ namespace B1
                                         kStateGas, 2.73 * kelvin, 3.0E-18 * pascal);
     G4Material *Be = nist->FindOrBuildMaterial("G4_Be");
     G4Material *Al = nist->FindOrBuildMaterial("G4_Al");
+    G4Material *Si = nist->FindOrBuildMaterial("G4_Si");
     G4Material *CdTe = nist->FindOrBuildMaterial("G4_CADMIUM_TELLURIDE");
     G4Material *W = nist->FindOrBuildMaterial("G4_W"); // Tungsten
                                                        // G4Material* Be = new G4Material("Beryllium", 4., 9.012*g/mole, 1.850*g/cm3);  // is this right?
@@ -93,10 +94,14 @@ namespace B1
     G4double BoxDepth = 2 * (FrontToRearBaffleSeperation + RearBaffleToDetectorSeparation);
     G4double BoxInnerWallThickness = 3 * mm;
 
+    // Detector Dimensions
     G4double DetectorThickness = 1.0 * mm;
     G4double DetectorSideLength = 10.0 * mm;
     G4int DetectorNum = 4;
     G4double DetectorSpacing = 2 * cm; // from Detector center to center!
+    G4double DetectorStoolThickness = 14.2 * mm;
+    G4double DetectorStoolSideLength = 12.0 * mm;
+    G4double DetectorBoardThickness = 2.46 * mm;
 
     G4double DetectorFilterThickness = 1.5 * mm;
     G4double FrontApertureFilterThickness = 1.5 * mm;
@@ -104,9 +109,10 @@ namespace B1
     // Volume positions - origin is at detector center
     auto rearBafflePosition = G4ThreeVector(0, 0, DetectorThickness / 2.0 + RearBaffleToDetectorSeparation);
     auto frontBafflePosition = G4ThreeVector(0, 0, DetectorThickness / 2.0 + RearBaffleToDetectorSeparation + FrontToRearBaffleSeperation);
-    auto boxBottomPosition = G4ThreeVector(0, 0, -BoxDepth / 2.0);
     auto boxPosition = G4ThreeVector(0, 0, 0);
     auto boxWallsPosition = G4ThreeVector(0, 0, rearBafflePosition[2] + FrontToRearBaffleSeperation / 2.0);
+    auto detectorBoardPosition = G4ThreeVector(0, 0, -(DetectorThickness / 2.0 + DetectorStoolThickness + DetectorBoardThickness / 2.0));
+    auto boxBottomPosition = G4ThreeVector(0, 0, detectorBoardPosition[2] - DetectorBoardThickness / 2.0 - BoxThickness / 2.0);
 
     G4ThreeVector pos1 = G4ThreeVector(0, 0 * cm, 0 * cm);
 
@@ -177,14 +183,9 @@ namespace B1
     boxVisStyle->SetForceWireframe(true);
     boxLogicalVolume->SetVisAttributes(boxVisStyle);
 
-    // Baffle box - rear plate
-    auto outerBoxRearSolidShape = new G4Box("BoxRear", BoxSideLength / 2., BoxSideLength / 2., BoxThickness / 2.0);
-    auto outerBoxRearSolidVolume = new G4LogicalVolume(outerBoxRearSolidShape, Al, "BoxRear_L");
-    new G4PVPlacement(nullptr, boxBottomPosition, outerBoxRearSolidVolume, "BoxRear_P", logicEnv, false, 0, checkOverlaps);
-
     // Inter Walls detector blockers   - FrontBaffleThickness - RearBaffleThickness
-    G4Box *Xwall = new G4Box("XWall", FrontBaffleSideLength / 2., BoxInnerWallThickness / 2., (FrontToRearBaffleSeperation- FrontBaffleThickness) / 2.0);
-    G4Box *Ywall = new G4Box("YWall", BoxInnerWallThickness / 2., FrontBaffleSideLength / 2., (FrontToRearBaffleSeperation- FrontBaffleThickness) / 2.0);
+    G4Box *Xwall = new G4Box("XWall", FrontBaffleSideLength / 2., BoxInnerWallThickness / 2., (FrontToRearBaffleSeperation - FrontBaffleThickness) / 2.0);
+    G4Box *Ywall = new G4Box("YWall", BoxInnerWallThickness / 2., FrontBaffleSideLength / 2., (FrontToRearBaffleSeperation - FrontBaffleThickness) / 2.0);
     G4UnionSolid *boxInnerWalls = new G4UnionSolid("BoxInnerWalls", Xwall, Ywall, nullptr, G4ThreeVector(0, 0, 0));
     auto boxInnerWallsSolidVolume = new G4LogicalVolume(boxInnerWalls, Al, "BoxInnerWalls_L");
     new G4PVPlacement(nullptr, boxWallsPosition, boxInnerWallsSolidVolume, "BoxInnerWalls_P", logicEnv, false, 0, checkOverlaps);
@@ -195,11 +196,13 @@ namespace B1
     //-----------------------
     // - Sensitive detectors -
     //-----------------------
-    for (G4int i = 0; i < DetectorNum; i++)
+    for (G4int i = 0; i < DetectorNum; i++) // iterate over each detector
     {
       G4ThreeVector DetectorPos;
       G4ThreeVector detectorFilterPosition;
       G4ThreeVector frontFilterPosition;
+      G4ThreeVector detectorStoolPosition;
+
       trackerVisualizationStyle = new G4VisAttributes();
 
       if (i == 0)
@@ -245,14 +248,20 @@ namespace B1
       frontFilterVisStyle->SetColor(G4Color(0.0, 0.0, 1.0)); // green
       frontFilterSolidVolume->SetVisAttributes(frontFilterVisStyle);
 
+      // Detector Stool or Electronics
+      detectorStoolPosition = G4ThreeVector(DetectorPos[0], DetectorPos[1], -DetectorThickness / 2.0 - DetectorStoolThickness / 2.0);
+      auto stoolSolid = new G4Box("DetectorStool_S", DetectorStoolSideLength / 2.0, DetectorStoolSideLength / 2.0, DetectorStoolThickness / 2.0);
+      auto stoolSolidVolume = new G4LogicalVolume(stoolSolid, Si, "DetectorStool_L");
+      new G4PVPlacement(nullptr, detectorStoolPosition, stoolSolidVolume, "DetectorStool_P", logicEnv, false, 0, checkOverlaps);
+
       // Sensitive Detector
       G4String detName = "tracker_" + std::to_string(i);
       auto trackerSolid = new G4Box(detName, DetectorSideLength / 2.0, DetectorSideLength / 2.0, DetectorThickness / 2.0);
-      trackerLogicalVolume = new G4LogicalVolume(trackerSolid, CdTe, "Tracker", nullptr, nullptr, nullptr);
+      trackerLogicalVolume = new G4LogicalVolume(trackerSolid, CdTe, detName, nullptr, nullptr, nullptr);
       auto trackerPhysicalVolume = new G4PVPlacement(nullptr,
                                                      DetectorPos,
                                                      trackerLogicalVolume,
-                                                     "Tracker",
+                                                     detName,
                                                      logicEnv,
                                                      false,
                                                      0,
@@ -262,6 +271,20 @@ namespace B1
       trackerLogicalVolume->SetVisAttributes(trackerVisualizationStyle);
       fScoringVolume = trackerLogicalVolume;
     }
+
+    // Detector Board
+    auto detectorBoard = new G4Box("DetectorBoard", BoxSideLength / 2., BoxSideLength / 2., DetectorBoardThickness / 2.);
+    auto detectorBoardSolidVolume = new G4LogicalVolume(detectorBoard, Si, "DetectorBoard_L");
+    new G4PVPlacement(nullptr, detectorBoardPosition, detectorBoardSolidVolume, "DetectorBoard_P", logicEnv, false, 0, checkOverlaps);
+    auto VisualizationStyle = new G4VisAttributes();
+    VisualizationStyle->SetColor(G4Color(0.0, 1.0, 0.0)); // green
+    detectorBoardSolidVolume->SetVisAttributes(VisualizationStyle);
+
+    // Baffle box - rear plate
+    auto outerBoxRearSolidShape = new G4Box("BoxRear", BoxSideLength / 2., BoxSideLength / 2., BoxThickness / 2.0);
+    auto outerBoxRearSolidVolume = new G4LogicalVolume(outerBoxRearSolidShape, Al, "BoxRear_L");
+    new G4PVPlacement(nullptr, boxBottomPosition, outerBoxRearSolidVolume, "BoxRear_P", logicEnv, false, 0, checkOverlaps);
+
     // frontBaffleHoles->Voxelize();
     // G4SubtractionSolid *frontBaffle2 = new G4SubtractionSolid("FrontBaffle_S", frontBaffleNoHoles, frontBaffleHoles);
     // G4LogicalVolume *frontBaffleLogicalVolume2 = new G4LogicalVolume(frontBaffle2, W, "FrontBaffle_L2", 0, 0, 0);
